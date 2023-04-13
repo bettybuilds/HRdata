@@ -6,10 +6,11 @@ This is not a project with a story or a business task. I have specifically searc
 
 Data has been downloaded and stored locally and uploaded into Google Drive as a back-up.
 
-As usualm we will treat this dataset as it's ROCCC:
+As usual, we will treat this dataset as it's ROCCC:
 - Reliable, Original and Cited: complete time series, which are accurate and non-bias. We will treat them as second-party datasets from a reliable organization.
 - Current and Comprehensive: we consider them as regularly refreshed datasets, which are appropriate and will enable us to answer the business questions. 
 
+We have the following columns:
 - __id:__ unique employee id used as primary key
 - __first_name:__ employee's first name
 - __last_name:__ employee's last name
