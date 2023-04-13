@@ -290,13 +290,3 @@ With naked eyes it's really hard to detect patterns and apart from this fact, th
 jobtitle would reflect the location since the best case scenario would be to let te employee decide where to work.
 We will check later on this in a chart.
 */
-
-SELECT * FROM hrdata
-LIMIT 10;
-
-/*
-Since the dataset unfortunately has faulty values for the experience, the following pivots cannot
-be checked:
-- years of (min) experience needed for roles or role levels
-- average years spent in a role
-*/
