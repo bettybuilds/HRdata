@@ -15,7 +15,7 @@ We have the following columns:
 - __first_name:__ employee's first name
 - __last_name:__ employee's last name
 - __birthdate:__ the date of birth
-- __gender:__ only categorical variable representing two genders: male or female
+- __gender:__ only categorical variable representing two genders: male or female (or Non-Conforming)
 - __race:__ employee diversity
 - __department:__ company's various divisions
 - __jobtitle:__ employee's current jobtitle (including role level if applicable)
@@ -25,7 +25,6 @@ We have the following columns:
 - __location_city:__ the city of work
 - __location_state:__ the state of work
 
-Based on the location data we can already see that the company is based in the US.
 
 ### Setting up a business task
 
