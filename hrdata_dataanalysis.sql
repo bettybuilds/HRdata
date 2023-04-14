@@ -35,37 +35,35 @@ UPDATE hrdata SET birthdate = STR_TO_DATE(birthdate, "%c.%e.%Y");
 UPDATE hrdata SET hire_date = STR_TO_DATE(hire_date, "%c.%e.%Y");
 
 SELECT DISTINCT termdate FROM hrdata;
-UPDATE hrdata SET termdate = STR_TO_DATE(termdate, "%Y-%m-%d %H:%i");
+UPDATE hrdata SET termdate = STR_TO_DATE(termdate, "%Y.%m.%d %k:%i");
 
 /*
-Error Code: 1411. Incorrect datetime value: '' for function str_to_date
-Corrected in Excel. Added '0000.00.00 00:00' value to every empty cell.
-
 Since in this part we would only like to explore the current employees, I could go ahead and drop the rows
 where the termdate is before 2023. Although, I'll take into account the '0000.00.00 00:00' as active.
 */
 
 SELECT COUNT(*) FROM hrdata
-WHERE termdate = '0000-00-00 00:00';
+WHERE termdate = '1900-01-01 00:00:00';
 
--- This method will add 18,285 active employee to the analysis. 
+-- This method will add 18,285 employee to the analysis. 
 
 SELECT COUNT(*) FROM hrdata
 WHERE termdate > '2023-01-01 00:00';
 
--- This means I should delete 1,640 rows. But let's make sure that it doesn't containing any defaut Null value:
+-- I have another 1,640 rows based on current year. But let's make sure that it doesn't containing any defaut Null value:
 
 SELECT COUNT(*) FROM hrdata
-WHERE '2001.04.15  2:05:00' < termdate AND termdate > '2023-01-01 00:00';
+WHERE termdate > '2000-01-01  00:00:00' AND termdate < '2023-01-01  00:00:00';
 
--- Same 1,640 rows. I'll go ahead and drop these.
+-- If we exclude the Nulls and every date after 2022, we'll have 2,289 rows. I'll go ahead and drop these,
+-- that will result a total of 19,925 rows.
 
 DELETE FROM hrdata
-WHERE '2001.04.15  2:05:00' < termdate AND termdate > '2023-01-01 00:00';
+WHERE termdate > '2000-01-01  00:00:00' AND termdate < '2023-01-01  00:00:00';
 
-SELECT count(*) FROM hrdata;
+SELECT COUNT(*) FROM hrdata;
 
--- Now we have a total 20,574 active employees.
+-- Now we have a total 19,925 active employees.
 
 -- Adding a full name column:
 ALTER TABLE hrdata ADD full_name VARCHAR(50);
@@ -136,7 +134,7 @@ ORDER BY avg_exp DESC;
 
 /*
 There are slightly more female at the top of the list, which means that the highest years of experience
-in the company are currently owned by females.
+in the company are currently owned mostly by females.
 I'm not able to detect anything else for the role levels with this pivot.
 */
 
@@ -144,7 +142,7 @@ SELECT gender, AVG(experience) AS avg_exp, COUNT(gender) AS nu_gender
 FROM hrdata
 WHERE gender != 'Non-Conforming'
 GROUP BY gender
-ORDER BY avg_exp;
+ORDER BY avg_exp DESC;
 
 /*
 This is incorrect, because the order by function causes disturbance in calculation.
@@ -155,9 +153,9 @@ SELECT COUNT(gender) AS total_count
 FROM hrdata
 WHERE gender != 'Non-Conforming';
 
--- The total count is 20,012.
+-- The total count is 19,380.
 
-SELECT gender, SUM(experience)/'20012' AS gender_exp
+SELECT gender, SUM(experience)/'19380' AS gender_exp
 FROM hrdata
 WHERE gender != 'Non-Conforming'
 GROUP BY gender;
@@ -200,16 +198,16 @@ to add more years between the birthdate and the hire_date.
 
 SELECT DISTINCT race FROM hrdata;
 
--- There are no missing data here, so it means that our total count is the row number: 20,574.
+-- There are no missing data here, so it means that our total count is the row number: 19,925.
 SELECT COUNT(race) FROM hrdata;
 
-SELECT race, (COUNT(race) / '20574') * 100 AS distr_race
+SELECT race, (COUNT(race) / '19925') * 100 AS distr_race
 FROM hrdata
 GROUP BY race
 ORDER BY distr_race DESC;
 
 /*
-Almost ~29% of the company are Whites, another bigger bites are Multiracials, Black/African Americans
+Almost ~28% of the company are Whites, another bigger bites are Multiracials, Black/African Americans
 and Asians with ~16% each.
 Hispanic/Latinos are significantly less represented in the company with a 11%. Meanwhile the
 American Indian/Alaska natives, the native Hawaiians or any other Pacific Isnlanders are present only ~6%.
@@ -217,7 +215,7 @@ American Indian/Alaska natives, the native Hawaiians or any other Pacific Isnlan
 
 -- We can check the data regarding the experience:
 
-SELECT race, (COUNT(race) / '20574') * 100 AS distr_race, AVG(experience) AS avg_exp
+SELECT race, (COUNT(race) / '19925') * 100 AS distr_race, AVG(experience) AS avg_exp
 FROM hrdata
 GROUP BY race
 ORDER BY avg_exp DESC;
@@ -272,7 +270,7 @@ ORDER BY nu_employee DESC;
 
 
 -- Nevertheless, we can check the location for race:
-SELECT COUNT(id) / 20574 * 100 AS nu_employee, location, race
+SELECT COUNT(id) / 19925 * 100 AS nu_employee, location, race
 FROM hrdata
 GROUP BY location, race
 ORDER BY location, nu_employee DESC;
