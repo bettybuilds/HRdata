@@ -42,19 +42,30 @@ Error Code: 1411. Incorrect datetime value: '' for function str_to_date
 Corrected in Excel. Added '0000.00.00 00:00' value to every empty cell.
 
 Since in this part we would only like to explore the current employees, I could go ahead and drop the rows
-where the termdate is before 2023.
+where the termdate is before 2023. Although, I'll take into account the '0000.00.00 00:00' as active.
 */
 
 SELECT COUNT(*) FROM hrdata
-WHERE termdate < '2023-01-21 00:00';
+WHERE termdate = '0000-00-00 00:00';
 
-/*
-However, it would only leave us with a total of 1,631 rows, so let's pretend that I already cleaned out the
-terminated eployees.
+-- This method will add 18,285 active employee to the analysis. 
 
->DELETE FROM hrdata
->WHERE termdate < '2023-01-21 00:00';
-*/
+SELECT COUNT(*) FROM hrdata
+WHERE termdate > '2023-01-01 00:00';
+
+-- This means I should delete 1,640 rows. But let's make sure that it doesn't containing any defaut Null value:
+
+SELECT COUNT(*) FROM hrdata
+WHERE '2001.04.15  2:05:00' < termdate AND termdate > '2023-01-01 00:00';
+
+-- Same 1,640 rows. I'll go ahead and drop these.
+
+DELETE FROM hrdata
+WHERE '2001.04.15  2:05:00' < termdate AND termdate > '2023-01-01 00:00';
+
+SELECT count(*) FROM hrdata;
+
+-- Now we have a total 20,574 active employees.
 
 -- Adding a full name column:
 ALTER TABLE hrdata ADD full_name VARCHAR(50);
@@ -69,7 +80,14 @@ UPDATE hrdata
 SET age = DATE_FORMAT(FROM_DAYS(DATEDIFF(NOW(), birthdate)), '%y') + 0;
 
 -- Calculate years of experience and add it as a new column:
-SELECT DATE_FORMAT(FROM_DAYS(DATEDIFF(NOW(), hire_date)), '%y') + 0 AS experience FROM hrdata;
+SELECT birthdate, age, hire_date, DATE_FORMAT(FROM_DAYS(DATEDIFF(NOW(), hire_date)), '%y') + 0 AS experience FROM hrdata;
+
+/*
+Could be logical as the birthdates are in the 90's and the hire dates are after the 2000's.
+Of course, only if we doesn't mind child labour! It seems like the creator of this database
+didn't think about the relation between the birthdate and the experience, but for the sake
+of this analysis let's pretend it's okay just for now.
+*/
 
 ALTER TABLE hrdata ADD experience INT;
 UPDATE hrdata
@@ -87,8 +105,10 @@ FROM hrdata
 GROUP BY jobtitle
 ORDER BY nu_employee DESC;
 
--- Now lets see what jobs we have by department:
-SELECT DISTINCT department, jobtitle FROM hrdata ORDER BY department;
+-- Now let's see what jobs we have by department:
+SELECT DISTINCT department, jobtitle
+FROM hrdata
+ORDER BY department;
 
 /*
 It seems like we have role levels for many jobs.
@@ -120,17 +140,6 @@ in the company are currently owned by females.
 I'm not able to detect anything else for the role levels with this pivot.
 */
 
-SELECT gender, jobtitle, AVG(experience) AS avg_exp
-FROM hrdata
-WHERE gender != 'Non-Conforming'
-GROUP BY gender, jobtitle
-ORDER BY jobtitle;
-
-/*
-At first sight, ordering by the job title from the first couple of rows gives me the feeling that on average
-the females have more experience than the males, but to state such things from this pivot would be a little foolish.
-*/
-
 SELECT gender, AVG(experience) AS avg_exp, COUNT(gender) AS nu_gender
 FROM hrdata
 WHERE gender != 'Non-Conforming'
@@ -146,9 +155,9 @@ SELECT COUNT(gender) AS total_count
 FROM hrdata
 WHERE gender != 'Non-Conforming';
 
--- The total count is 21,609.
+-- The total count is 20,012.
 
-SELECT gender, SUM(experience)/'21609' AS gender_exp
+SELECT gender, SUM(experience)/'20012' AS gender_exp
 FROM hrdata
 WHERE gender != 'Non-Conforming'
 GROUP BY gender;
@@ -173,17 +182,16 @@ The count of employees grouped by age and gender could be a very interesting dat
 we will do later. With bare eyes I don't detect any significant discrepancy between the genders.
 */
 
-SELECT gender, age, AVG(experience) AS avg_exp
+SELECT gender, age, experience
 FROM hrdata
 WHERE gender != 'Non-Conforming'
-GROUP BY gender, age
-ORDER BY age, avg_exp DESC;
+GROUP BY gender, age, experience
+ORDER BY age, experience DESC;
 
 /*
 If we add the average experience we can see that the dataset is faulty in this aspect.
-It cannot happen that a 20 year-old person has 22 years of experience in the company.
-This means that unfortunately the creator of the dataset forgot to lower the years of experiences
-based on each employee's age.
+As we discussed at the very beginning, unfortunately the creator of the dataset forgot
+to add more years between the birthdate and the hire_date.
 */
 
 -- However, this fact won't stop us to make the most of our dataset, so let's continue the exporation!
@@ -192,32 +200,32 @@ based on each employee's age.
 
 SELECT DISTINCT race FROM hrdata;
 
--- There are no missing data here, so it means that our total count is the row number: 22,214.
+-- There are no missing data here, so it means that our total count is the row number: 20,574.
 SELECT COUNT(race) FROM hrdata;
 
-SELECT race, (COUNT(race) / '22214') * 100 AS distr_race
+SELECT race, (COUNT(race) / '20574') * 100 AS distr_race
 FROM hrdata
 GROUP BY race
 ORDER BY distr_race DESC;
 
 /*
-Almost 30% of the company is White, another bigger bites are Multiracials, Black/African Americans
+Almost ~29% of the company are Whites, another bigger bites are Multiracials, Black/African Americans
 and Asians with ~16% each.
-Hispanic/Latino is significantly less represented in the company with a 11%. Meanwhile the Indian or Alaska
-natives, the native Hawaiians or any other Pacific Isnlanders are present only 5%.
+Hispanic/Latinos are significantly less represented in the company with a 11%. Meanwhile the
+American Indian/Alaska natives, the native Hawaiians or any other Pacific Isnlanders are present only ~6%.
 */
 
 -- We can check the data regarding the experience:
 
-SELECT race, (COUNT(race) / '22214') * 100 AS distr_race, AVG(experience) AS avg_exp
+SELECT race, (COUNT(race) / '20574') * 100 AS distr_race, AVG(experience) AS avg_exp
 FROM hrdata
 GROUP BY race
 ORDER BY avg_exp DESC;
 
 /*
-There is no significant discrepancy in the experience between the different races. Black/African Americans
-have slightly more experience than most of the company, but the native Hawaiians/Other Pacific Isnalders
-are at the top.
+There is no significant discrepancy in the experience between the different races.
+Black/African Americans usually have slightly more experience than most of the company, but the
+Native Hawaiians/Other Pacific Isnalders are at the top.
 
 We can check the jobtitles for each race in a pivot as well, but it's too much information. We should check
 this in a chart later.
@@ -245,6 +253,7 @@ LIMIT 10;
 
 SELECT DISTINCT location FROM hrdata;
 
+
 -- There is one more interesting data we haven't check yet: remote vs office.
 
 -- First we can check what is the distribution of the employees:
@@ -252,29 +261,25 @@ SELECT COUNT(id) AS nu_employee, location
 FROM hrdata
 GROUP BY location;
 
--- We can see that currently the preferred working place is in the office.
+-- Currently the preferred working place is in the office.
 
+-- What is the distribution between the genders?
 SELECT COUNT(id) AS nu_employee, location, gender
 FROM hrdata
 WHERE gender != 'Non-Conforming'
 GROUP BY location, gender
 ORDER BY nu_employee DESC;
 
-/*
-Regarding the gender, we can check how many are in the office vs working remotely,
-however it clearly depending on the total number of gender distribution and the fact that the company
-has an "office first" mindset.
-*/
 
 -- Nevertheless, we can check the location for race:
-SELECT COUNT(id) / 22214 * 100 AS nu_employee, location, race
+SELECT COUNT(id) / 20574 * 100 AS nu_employee, location, race
 FROM hrdata
 GROUP BY location, race
 ORDER BY location, nu_employee DESC;
 
 /*
-It's good to see here that the race distribution percentages and the location distributions can be recognized here,
-as that means the company doesn't decide on the working place based on gender or race.
+It's good to see here that both in the gender and in the race distribution percentages we can recognize the
+location distributions, as that means the company doesn't decide on the working place based on gender or race.
 
 From my experience, the jobtitle (and maybe the role level) would be the key factor, for which wouldn't be the
 best idea to visualize in a pivot, but in a chart.
@@ -287,6 +292,6 @@ ORDER BY location;
 
 /*
 With naked eyes it's really hard to detect patterns and apart from this fact, there is no guarantee that the
-jobtitle would reflect the location since the best case scenario would be to let te employee decide where to work.
+jobtitle would reflect the location since the best case scenario would be to let the employee decide where to work.
 We will check later on this in a chart.
 */
