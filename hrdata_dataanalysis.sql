@@ -39,7 +39,7 @@ UPDATE hrdata SET termdate = STR_TO_DATE(termdate, "%Y.%m.%d %k:%i");
 
 /*
 Since in this part we would only like to explore the current employees, I could go ahead and drop the rows
-where the termdate is before 2023. Although, I'll take into account the '0000.00.00 00:00' as active.
+where the termdate is before 2023. Although, I'll take into account the '1900-01-01 00:00:00' as active.
 */
 
 SELECT COUNT(*) FROM hrdata
