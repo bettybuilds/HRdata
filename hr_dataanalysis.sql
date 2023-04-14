@@ -82,10 +82,12 @@ SET age = DATE_FORMAT(FROM_DAYS(DATEDIFF(NOW(), birthdate)), '%y') + 0;
 -- Calculate years of experience and add it as a new column:
 SELECT birthdate, age, hire_date, DATE_FORMAT(FROM_DAYS(DATEDIFF(NOW(), hire_date)), '%y') + 0 AS experience FROM hrdata;
 
--- Could be logical as the birthdates are in the 90's and the hire dates are after the 2000's.
--- Of course, only if we doesn't mind child labour! It seems like the creator of this database
--- didn't think about the relation between the birthdate and the experience, but for the sake
--- of this analysis let's pretend it's okay just for now.
+/*
+Could be logical as the birthdates are in the 90's and the hire dates are after the 2000's.
+Of course, only if we doesn't mind child labour! It seems like the creator of this database
+didn't think about the relation between the birthdate and the experience, but for the sake
+of this analysis let's pretend it's okay just for now.
+*/
 
 ALTER TABLE hrdata ADD experience INT;
 UPDATE hrdata
@@ -276,8 +278,8 @@ GROUP BY location, race
 ORDER BY location, nu_employee DESC;
 
 /*
-It's good to see here that the race distribution percentages and the location distributions can be recognized here,
-as that means the company doesn't decide on the working place based on gender or race.
+It's good to see here that both in the gender and in the race distribution percentages we can recognize the
+location distributions, as that means the company doesn't decide on the working place based on gender or race.
 
 From my experience, the jobtitle (and maybe the role level) would be the key factor, for which wouldn't be the
 best idea to visualize in a pivot, but in a chart.
